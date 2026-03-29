@@ -3,365 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kerepek Padu</title>
+    <title>Kerepek Padu - Cloud System</title>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #4f46e5; --accent: #10b981; --danger: #ef4444; --bg: #f8fafc; --card: #ffffff; }
+        :root { --primary: #6366f1; --accent: #10b981; --danger: #f43f5e; --bg: #f8fafc; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background-color: var(--bg); color: #1e293b; padding-bottom: 50px; }
-        header { background: linear-gradient(135deg, var(--primary), #312e81); color: white; padding: 30px; text-align: center; }
-        .container { width: 95%; max-width: 1200px; margin: -30px auto 0; }
-        
-        .nav-tabs { display: flex; gap: 10px; background: white; padding: 10px; border-radius: 15px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); margin-bottom: 25px; overflow-x: auto; }
-        .nav-tabs button { flex: 1; padding: 15px; border: none; border-radius: 10px; background: none; font-weight: 700; cursor: pointer; color: #64748b; white-space: nowrap; transition: 0.3s; }
+        header { background: linear-gradient(135deg, #4338ca, #6366f1); color: white; padding: 40px 20px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .container { width: 95%; max-width: 1000px; margin: -30px auto 0; }
+        .nav-tabs { display: flex; gap: 8px; background: white; padding: 8px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .nav-tabs button { flex: 1; padding: 12px; border: none; border-radius: 12px; background: none; font-weight: 700; cursor: pointer; color: #64748b; transition: 0.3s; font-size: 0.9rem; }
         .nav-tabs button.active { background: var(--primary); color: white; }
-
-        .card { background: var(--card); border-radius: 20px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        .page { display: none; }
-        .page.active { display: block; }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { text-align: left; padding: 12px; background: #f8fafc; font-size: 0.8rem; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #edf2f7; }
-        td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.95rem; }
-        
-        input, select { padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; width: 100%; margin: 8px 0 15px 0; font-size: 1rem; }
-        .btn { padding: 12px 20px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-primary { background: var(--primary); color: white; width: 100%; }
-        .btn-success { background: var(--accent); color: white; width: 100%; }
-        .btn-print { background: #64748b; color: white; width: 100%; }
-        .btn-qty { padding: 5px 10px; background: #e2e8f0; border-radius: 5px; font-weight: bold; border: none; cursor: pointer; }
-        
-        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 25px; }
-        .stat-box { padding: 25px; border-radius: 20px; color: white; }
-
-        #print-area { display: none; }
-        @media print { 
-            body * { visibility: hidden; }
-            #print-area, #print-area * { visibility: visible; }
-            #print-area { position: absolute; left: 0; top: 0; width: 100%; display: block; padding: 20px; border:none; }
-            .no-print { display: none !important; }
-        }
+        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        .page { display: none; } .page.active { display: block; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px; background: #f8fafc; font-size: 0.75rem; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #edf2f7; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
+        input, select { padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; width: 100%; margin: 8px 0 16px 0; font-size: 1rem; }
+        .btn { padding: 14px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-qty { padding: 6px 12px; background: #f1f5f9; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer; font-weight: bold; }
+        .status-pill { padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<header class="no-print">
-    <h1>KEREPEK PADU</h1>
-    <p>Sistem Pengurusan Stok & Jualan</p>
+<header>
+    <h1 style="letter-spacing: -1px;">KEREPEK PADU 🚀</h1>
+    <p style="opacity: 0.9; font-size: 0.9rem;">Sistem Cloud Jualan & Stok</p>
 </header>
 
-<div class="container no-print">
+<div class="container">
     <div class="nav-tabs">
         <button class="active" onclick="showTab('jualan', this)">🛒 Jualan</button>
-        <button onclick="showTab('stok', this)">📦 Stok & Produk</button>
-        <button onclick="showTab('kos', this)">📊 Belanja & Untung</button>
-        <button onclick="showTab('rekod', this)">📜 Sejarah</button>
+        <button onclick="showTab('stok', this)">📦 Stok</button>
+        <button onclick="showTab('rekod', this)">📜 Rekod</button>
     </div>
 
     <div id="jualan" class="page active">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
-            <div class="card">
-                <h3>1. Pilih Kerepek</h3>
-                <label>Produk (Baki Stok LIVE)</label>
-                <select id="selProd" onchange="updateCartBtn()"></select>
-                <label>Nama Pelanggan</label>
-                <input type="text" id="custName" placeholder="Contoh: Nama Pelanggan">
-                <button class="btn btn-primary" id="btnAddCart" onclick="addCart()">+ Masukkan Bakul</button>
+        <div class="card">
+            <h3 style="margin-bottom:10px">Tambah Pesanan</h3>
+            <label>Pilih Produk (Stok Semasa)</label>
+            <select id="selProd"></select>
+            <label>Nama Pelanggan</label>
+            <input type="text" id="custName" placeholder="Masukkan nama...">
+            <button class="btn btn-primary" onclick="addCart()">+ Masukkan Bakul</button>
+        </div>
+        
+        <div class="card">
+            <h3>Bakul Pesanan</h3>
+            <table id="cartTable">
+                <thead><tr><th>Item</th><th>Qty</th><th>Jumlah</th><th></th></tr></thead>
+                <tbody></tbody>
+            </table>
+            <div style="text-align:right; margin-top:15px; border-top: 2px dashed #f1f5f9; padding-top:15px;">
+                <h2 id="totalCart" style="color:var(--primary)">Total: RM 0.00</h2>
             </div>
-            <div class="card">
-                <h3>2. Bakul Pesanan</h3>
-                <table id="cartTable">
-                    <thead><tr><th>Item</th><th>Qty</th><th>Jumlah</th><th></th></tr></thead>
-                    <tbody></tbody>
-                </table>
-                <div style="margin-top:20px; border-top: 2px dashed #eee; padding-top:15px">
-                    <h2 id="totalCart" style="text-align:right; color:var(--primary)">Total: RM 0.00</h2>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
-                    <button class="btn btn-success" onclick="checkout()">✅ Simpan Jualan</button>
-                    <button class="btn btn-print" onclick="printResitLangsung()">🖨️ Cetak Resit</button>
-                </div>
-            </div>
+            <button class="btn btn-primary" style="background:var(--accent); margin-top:15px" onclick="checkout()">✅ Sahkan & Simpan Cloud</button>
         </div>
     </div>
 
     <div id="stok" class="page">
-        <div class="card" style="background: #f0fdf4;">
-            <h3>➕ Tambah Produk Baru</h3>
-            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px;">
-                <input type="text" id="newPName" placeholder="Nama Produk">
-                <input type="number" id="newPCost" placeholder="Modal">
-                <input type="number" id="newPPrice" placeholder="Jual">
-            </div>
-            <button class="btn btn-primary" onclick="addNewProduct()">Simpan Produk Baru</button>
-        </div>
         <div class="card">
-            <h3>📦 Pengurusan Stok</h3>
+            <h3>📦 Kawalan Stok Pusat</h3>
             <table id="stokTable">
-                <thead><tr><th>No Siri</th><th>Produk</th><th>Modal</th><th>Jual</th><th>Stok</th><th>Aksi</th></tr></thead>
+                <thead><tr><th>Produk</th><th>Harga</th><th>Baki</th><th>Aksi</th></tr></thead>
                 <tbody></tbody>
             </table>
-        </div>
-    </div>
-
-    <div id="kos" class="page">
-        <div class="stat-grid">
-            <div class="stat-box" style="background:var(--primary)">
-                <p>Jualan Kasar</p><h2 id="sumSales">RM 0.00</h2>
-            </div>
-            <div class="stat-box" style="background:var(--danger)">
-                <p>Total Belanja</p><h2 id="sumExp">RM 0.00</h2>
-            </div>
-            <div class="stat-box" style="background:var(--accent)">
-                <p>Untung Bersih</p><h2 id="sumNet">RM 0.00</h2>
-            </div>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px;">
-            <div class="card">
-                <h3>Rekod Belanja</h3>
-                <label>Tarikh</label>
-                <input type="date" id="expDate">
-                <input type="text" id="expItem" placeholder="Contoh: Plastik / Sticker">
-                <input type="number" id="expAmt" placeholder="0.00">
-                <button class="btn btn-primary" onclick="saveExp()">Simpan</button>
-            </div>
-            <div class="card">
-                <h3>Senarai Belanja</h3>
-                <table id="expTable">
-                    <thead><tr><th>Siri</th><th>Tarikh</th><th>Item</th><th>Kos</th><th></th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
+            <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+            <p style="font-size:0.8rem; color:#94a3b8; margin-bottom:10px;">Tetapan Sistem:</p>
+            <button class="btn" style="background:#f1f5f9; color:#475569; font-size:0.8rem" onclick="firstTimeSetup()">⚙️ Setup Stok Awal (Klik Sekali Sahaja)</button>
         </div>
     </div>
 
     <div id="rekod" class="page">
         <div class="card">
-            <h3>📜 Sejarah Jualan Bersiri</h3>
+            <h3>📜 Sejarah Jualan Global</h3>
             <table id="salesTable">
-                <thead><tr><th>No Siri</th><th>Tarikh</th><th>Pelanggan</th><th>Total</th><th>Aksi</th></tr></thead>
+                <thead><tr><th>No Siri</th><th>Pelanggan</th><th>Total</th><th>Aksi</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
     </div>
 </div>
 
-<div id="print-area">
-    <div style="text-align:center; border-bottom: 2px solid #000; padding-bottom: 10px;">
-        <h1 id="pTitle">RESIT KEREPEK PADU</h1>
-        <p id="pSiri" style="font-weight:bold;"></p>
-        <p id="pDate"></p>
-    </div>
-    <div id="pContent" style="margin: 20px 0;"></div>
-    <div style="text-align:right; border-top: 1px solid #000; padding-top:10px;">
-        <h2 id="pTotal"></h2>
-    </div>
-    <p style="text-align:center; margin-top:30px;">Terima Kasih Atas Sokongan Anda!</p>
-</div>
-
 <script>
-    const masterKerepek = [
-        { name: "Kerepek Bika Kari", cost: 9, price: 13, stock: 0 },
-        { name: "Kerepek Ring Kari", cost: 9, price: 13, stock: 0 },
-        { name: "Kerepek Roda Kari", cost: 9, price: 13, stock: 0 },
-        { name: "Kerepek Pisang Tanduk", cost: 18, price: 25, stock: 0 },
-        { name: "Kerepek Bawang", cost: 8, price: 12, stock: 0 },
-        { name: "Kerepek Ubi Pedas Basah", cost: 8, price: 12, stock: 0 },
-        { name: "Kerepek Ubi Pedas Kering", cost: 8, price: 12, stock: 0 },
-        { name: "Kerepek Ubi Kari", cost: 8, price: 12, stock: 0 },
-        { name: "Kerepek Ubi Masin", cost: 8, price: 12, stock: 0 },
-        { name: "Jejari Udang / Pagoda", cost: 10, price: 14, stock: 0 },
-        { name: "Potato Spicy", cost: 11, price: 15, stock: 0 },
-        { name: "Potato Snek Balado", cost: 10, price: 14, stock: 0 },
-        { name: "Tortilla Spicy", cost: 10, price: 14, stock: 0 },
-        { name: "Kentang Cheese", cost: 10, price: 14, stock: 0 },
-        { name: "Kentang Kari", cost: 10, price: 14, stock: 0 },
-        { name: "Rempeyek Kacang Tanah", cost: 17, price: 24, stock: 0 },
-        { name: "Rempeyek Kacang Hijau", cost: 17, price: 24, stock: 0 },
-        { name: "Rempeyek Kacang Dhal", cost: 17, price: 24, stock: 0 }
-    ];
+    // 1. MASUKKAN CONFIG FIREBASE ANDA DI SINI
+   // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyC-X22X22wtvMJZp87Iabnb_8STkelsqak",
+  authDomain: "kerepek-padu.firebaseapp.com",
+  databaseURL: "https://kerepek-padu-default-rtdb.firebaseio.com",
+  projectId: "kerepek-padu",
+  storageBucket: "kerepek-padu.firebasestorage.app",
+  messagingSenderId: "329010382513",
+  appId: "1:329010382513:web:579f235b132f43e5e18490",
+  measurementId: "G-KN99SJL5JZ"
+};
+    };
 
-    let db_stok = JSON.parse(localStorage.getItem('kb_stok_v21')) || masterKerepek;
-    let db_sales = JSON.parse(localStorage.getItem('kb_sales_v21')) || [];
-    let db_exp = JSON.parse(localStorage.getItem('kb_exp_v21')) || [];
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
     let cart = [];
 
-    function showTab(id, btn) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        btn.classList.add('active');
-        if(id === 'kos') updateStats();
-    }
-
-    function refreshUI() {
-        document.getElementById('selProd').innerHTML = db_stok.map((p, i) => 
-            `<option value="${i}">${p.name} [Baki: ${p.stock}]</option>`).join('');
-
-        document.getElementById('stokTable').querySelector('tbody').innerHTML = db_stok.map((p, i) => `
-            <tr>
-                <td><small>P-${1000+i}</small></td>
-                <td><strong>${p.name}</strong></td>
-                <td>RM${p.cost}</td>
-                <td>RM${p.price}</td>
-                <td><b style="color:${p.stock < 5 ? 'red' : 'green'}">${p.stock}</b></td>
-                <td><button class="btn-qty" onclick="restock(${i})">+ Stok</button></td>
-            </tr>`).join('');
+    // 2. LIVE SYNC: Stok
+    db.ref('stok').on('value', (snap) => {
+        const data = snap.val();
+        if(!data) return;
         
-        localStorage.setItem('kb_stok_v21', JSON.stringify(db_stok));
-    }
+        // Render Table Stok
+        let htmlTable = '';
+        let htmlDrop = '';
+        for (let key in data) {
+            let p = data[key];
+            htmlTable += `<tr>
+                <td><b>${p.name}</b></td>
+                <td>RM${p.price}</td>
+                <td><span class="status-pill" style="background:${p.stock < 5 ? '#fee2e2' : '#dcfce7'}; color:${p.stock < 5 ? '#b91c1c' : '#15803d'}">${p.stock}</span></td>
+                <td><button class="btn-qty" onclick="restock('${key}', ${p.stock})">+</button></td>
+            </tr>`;
+            htmlDrop += `<option value="${key}">${p.name} [Stok: ${p.stock}]</option>`;
+        }
+        document.getElementById('stokTable').querySelector('tbody').innerHTML = htmlTable;
+        document.getElementById('selProd').innerHTML = htmlDrop;
+    });
+
+    // 3. LIVE SYNC: Jualan
+    db.ref('jualan').on('value', (snap) => {
+        const data = snap.val();
+        let html = '';
+        for (let id in data) {
+            html += `<tr><td><small>${id}</small></td><td>${data[id].cust}</td><td>RM${data[id].total}</td><td><button class="btn-qty">🖨️</button></td></tr>`;
+        }
+        document.getElementById('salesTable').querySelector('tbody').innerHTML = html;
+    });
 
     function addCart() {
-        const idx = document.getElementById('selProd').value;
-        const p = db_stok[idx];
-        if(p.stock <= 0) return alert("Stok sudah habis!");
-
-        const existing = cart.find(c => c.idx == idx);
-        if(existing) {
-            if(existing.qty < p.stock) {
-                existing.qty++;
-                existing.total = existing.qty * p.price;
-            } else { alert("Stok maksimum dicapai!"); }
-        } else {
-            cart.push({ idx, name: p.name, qty: 1, price: p.price, cost: p.cost, total: p.price });
-        }
-        renderCart();
-    }
-
-    function updateCartQty(i, change) {
-        const item = cart[i];
-        const p = db_stok[item.idx];
-        if(change > 0 && item.qty >= p.stock) return alert("Stok tidak cukup!");
-        item.qty += change;
-        item.total = item.qty * item.price;
-        if(item.qty <= 0) cart.splice(i, 1);
-        renderCart();
+        const id = document.getElementById('selProd').value;
+        db.ref('stok/' + id).once('value', (snap) => {
+            const p = snap.val();
+            if(p.stock <= 0) return alert("Tiada Stok!");
+            const exist = cart.find(c => c.id === id);
+            if(exist) {
+                if(exist.qty < p.stock) { exist.qty++; exist.total = exist.qty * p.price; }
+                else { alert("Stok maksimum!"); }
+            } else {
+                cart.push({ id, name: p.name, qty: 1, price: p.price, total: p.price });
+            }
+            renderCart();
+        });
     }
 
     function renderCart() {
         let sub = 0;
         document.getElementById('cartTable').querySelector('tbody').innerHTML = cart.map((c, i) => {
             sub += c.total;
-            return `<tr>
-                <td>${c.name}</td>
-                <td>
-                    <button class="btn-qty" onclick="updateCartQty(${i}, -1)">-</button>
-                    <span style="margin:0 8px">${c.qty}</span>
-                    <button class="btn-qty" onclick="updateCartQty(${i}, 1)">+</button>
-                </td>
-                <td>RM${c.total.toFixed(2)}</td>
-                <td><button onclick="cart.splice(${i},1);renderCart()" style="color:red;border:none;background:none;cursor:pointer;">×</button></td>
-            </tr>`;
+            return `<tr><td>${c.name}</td><td>${c.qty}</td><td>RM${c.total}</td><td><button onclick="cart.splice(${i},1);renderCart()" style="border:none;background:none;color:red">×</button></td></tr>`;
         }).join('');
         document.getElementById('totalCart').innerText = `Total: RM ${sub.toFixed(2)}`;
     }
 
-    function printResitLangsung() {
-        if(cart.length === 0) return alert("Bakul kosong!");
-        const cust = document.getElementById('custName').value || "Pelanggan Am";
-        const sub = cart.reduce((a,b)=>a+b.total,0);
-        
-        document.getElementById('pSiri').innerText = "DRAFT RESIT";
-        document.getElementById('pDate').innerText = "Tarikh: " + new Date().toLocaleString();
-        document.getElementById('pContent').innerHTML = `
-            <p>Pelanggan: ${cust}</p><br>
-            <table style="width:100%; text-align:left;">
-                <thead><tr><th>Item</th><th>Qty</th><th>Harga</th></tr></thead>
-                <tbody>${cart.map(i => `<tr><td>${i.name}</td><td>x${i.qty}</td><td>RM${i.total.toFixed(2)}</td></tr>`).join('')}</tbody>
-            </table>`;
-        document.getElementById('pTotal').innerText = `JUMLAH: RM${sub.toFixed(2)}`;
-        window.print();
-    }
-
     function checkout() {
-        if(cart.length === 0) return alert("Bakul kosong!");
-        let pKasar = 0;
-        cart.forEach(c => {
-            db_stok[c.idx].stock -= c.qty;
-            pKasar += (c.price - c.cost) * c.qty;
-        });
-
-        const siri = `KB-J${1000 + db_sales.length}`;
-        db_sales.push({
-            siri,
-            date: new Date().toLocaleString(),
-            cust: document.getElementById('custName').value || 'Am',
-            total: cart.reduce((a,b)=>a+b.total,0),
-            profit: pKasar,
-            items: [...cart]
-        });
-
-        cart = []; document.getElementById('custName').value = "";
-        refreshUI(); renderCart(); renderSales();
-        localStorage.setItem('kb_sales_v21', JSON.stringify(db_sales));
-        alert(`Jualan Berhasil! Siri: ${siri}`);
-    }
-
-    function saveExp() {
-        const date = document.getElementById('expDate').value;
-        const item = document.getElementById('expItem').value;
-        const amt = parseFloat(document.getElementById('expAmt').value);
-        if(!date || !item || isNaN(amt)) return alert("Isi maklumat belanja!");
+        if(cart.length === 0) return;
+        const salesId = 'KP-' + Date.now().toString().slice(-6);
         
-        db_exp.push({ siri: `KB-E${1000+db_exp.length}`, date, item, amt });
-        updateStats();
-        localStorage.setItem('kb_exp_v21', JSON.stringify(db_exp));
+        cart.forEach(item => {
+            db.ref('stok/' + item.id + '/stock').transaction(c => (c || 0) - item.qty);
+        });
+
+        db.ref('jualan/' + salesId).set({
+            date: new Date().toLocaleString(),
+            cust: document.getElementById('custName').value || 'Pelanggan',
+            total: cart.reduce((a,b)=>a+b.total,0),
+            items: cart
+        });
+
+        cart = []; renderCart(); document.getElementById('custName').value = "";
+        alert("Terima Kasih! Jualan Disimpan ke Cloud.");
     }
 
-    function updateStats() {
-        const jualan = db_sales.reduce((a,b)=>a+b.total,0);
-        const pKasar = db_sales.reduce((a,b)=>a+b.profit,0);
-        const belanja = db_exp.reduce((a,b)=>a+b.amt,0);
-        document.getElementById('sumSales').innerText = `RM ${jualan.toFixed(2)}`;
-        document.getElementById('sumExp').innerText = `RM ${belanja.toFixed(2)}`;
-        document.getElementById('sumNet').innerText = `RM ${(pKasar - belanja).toFixed(2)}`;
-
-        document.getElementById('expTable').querySelector('tbody').innerHTML = db_exp.slice().reverse().map((e,i)=>`
-            <tr><td><small>${e.siri}</small></td><td>${e.date}</td><td>${e.item}</td><td>RM${e.amt}</td>
-            <td><button onclick="db_exp.splice(${db_exp.length-1-i},1);updateStats();" style="color:red;border:none;background:none;cursor:pointer;">×</button></td></tr>`).join('');
+    function restock(id, current) {
+        let v = prompt("Tambah Stok Baru:");
+        if(v && !isNaN(v)) db.ref('stok/' + id).update({ stock: current + parseInt(v) });
     }
 
-    function renderSales() {
-        document.getElementById('salesTable').querySelector('tbody').innerHTML = db_sales.slice().reverse().map((s,i)=>`
-            <tr>
-                <td><b>${s.siri}</b></td>
-                <td><small>${s.date}</small></td>
-                <td>${s.cust}</td>
-                <td>RM${s.total.toFixed(2)}</td>
-                <td>
-                    <button class="btn-qty" onclick="cetakResitSejarah(${db_sales.length-1-i})">🖨️</button>
-                    <button onclick="if(confirm('Padam?')) {db_sales.splice(${db_sales.length-1-i},1);renderSales();updateStats();localStorage.setItem('kb_sales_v21', JSON.stringify(db_sales));}" style="color:red;border:none;background:none;margin-left:8px;cursor:pointer;">×</button>
-                </td>
-            </tr>`).join('');
+    function showTab(id, btn) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        btn.classList.add('active');
     }
 
-    function cetakResitSejarah(idx) {
-        const s = db_sales[idx];
-        document.getElementById('pSiri').innerText = "NO SIRI: " + s.siri;
-        document.getElementById('pDate').innerText = "Tarikh: " + s.date;
-        document.getElementById('pContent').innerHTML = `
-            <p>Pelanggan: ${s.cust}</p><br>
-            <table style="width:100%; text-align:left;">
-                <thead><tr><th>Item</th><th>Qty</th><th>Harga</th></tr></thead>
-                <tbody>${s.items.map(i => `<tr><td>${i.name}</td><td>x${i.qty}</td><td>RM${i.total.toFixed(2)}</td></tr>`).join('')}</tbody>
-            </table>`;
-        document.getElementById('pTotal').innerText = `TOTAL: RM${s.total.toFixed(2)}`;
-        window.print();
+    function firstTimeSetup() {
+        if(!confirm("Adakah anda ingin memasukkan senarai 18 kerepek asal ke database?")) return;
+        const initialStok = {
+            "p1": { name: "Kerepek Bika Kari", price: 13, stock: 0 },
+            "p2": { name: "Kerepek Ring Kari", price: 13, stock: 0 },
+            "p3": { name: "Kerepek Roda Kari", price: 13, stock: 0 },
+            "p4": { name: "Kerepek Pisang Tanduk", price: 25, stock: 0 },
+            "p5": { name: "Kerepek Bawang", price: 12, stock: 0 },
+            "p6": { name: "Kerepek Ubi Pedas Basah", price: 12, stock: 0 },
+            "p7": { name: "Kerepek Ubi Pedas Kering", price: 12, stock: 0 },
+            "p8": { name: "Kerepek Ubi Kari", price: 12, stock: 0 },
+            "p9": { name: "Kerepek Ubi Masin", price: 12, stock: 0 },
+            "p10": { name: "Jejari Udang / Pagoda", price: 14, stock: 0 },
+            "p11": { name: "Potato Spicy", price: 15, stock: 0 },
+            "p12": { name: "Potato Snek Balado", price: 14, stock: 0 },
+            "p13": { name: "Tortilla Spicy", price: 14, stock: 0 },
+            "p14": { name: "Kentang Cheese", price: 14, stock: 0 },
+            "p15": { name: "Kentang Kari", price: 14, stock: 0 },
+            "p16": { name: "Rempeyek Kacang Tanah", price: 24, stock: 0 },
+            "p17": { name: "Rempeyek Kacang Hijau", price: 24, stock: 0 },
+            "p18": { name: "Rempeyek Kacang Dhal", price: 24, stock: 0 }
+        };
+        db.ref('stok').set(initialStok).then(() => alert("Setup Berjaya! Senarai Kerepek Padu kini online."));
     }
-
-    function restock(i) {
-        let v = prompt(`Masukkan jumlah stok baru untuk ${db_stok[i].name}:`);
-        if(v && !isNaN(v)) { db_stok[i].stock += parseInt(v); refreshUI(); }
-    }
-
-    function addNewProduct() {
-        const n = document.getElementById('newPName').value;
-        const c = parseFloat(document.getElementById('newPCost').value);
-        const p = parseFloat(document.getElementById('newPPrice').value);
-        if(n && c && p) { db_stok.push({name:n, cost:c, price:p, stock:0}); refreshUI(); }
-    }
-
-    window.onload = () => { refreshUI(); updateStats(); renderSales(); document.getElementById('expDate').valueAsDate = new Date(); };
 </script>
 
 </body>
